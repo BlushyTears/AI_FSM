@@ -8,31 +8,31 @@
 #include "raylib.h"
 #include "resource_dir.h"	
 
+#include "FSMLibrary.h"
+
 // Agent-specific implementation:
-
 template <typename T>
-struct AgentStartingState : State {
-
-};
+struct Agent;
 
 template <typename T>
 struct Agent {
+	int id;
 	int money = 100;
 	std::vector<std::pair<int, std::string>> items;
 	int alertness = 100;
 	int satiety = 100;
 	int socialScore = 100;
-	StateMachine sm;
+	StateMachine<Agent<T>> sm;
 };
 
 // Action primitive idea to eat
-template <typename Agent>
-struct EatingAction : Action<Agent> {
-	void execute(Agent& agent) {
-		std::cout << "Hunger currently is " << agent.satiety << " Eating more:";
-		agent.satiety += 5;
-	}
-};
+//template <typename Agent>
+//struct EatingAction : Action<Agent> {
+//	void execute(Agent& agent) {
+//		std::cout << "Hunger currently is " << agent.satiety << " Eating more:";
+//		agent.satiety += 5;
+//	}
+//};
 
 // Idea for scheduling, probably not final thought
 //enum EnumStates {
