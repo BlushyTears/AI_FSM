@@ -12,6 +12,7 @@ template <typename T>
 struct IdleAction : Action<T> {
 	void execute(T& agent) override {
 		std::cout << "Agent" << agent.id << " Is idleing.. " << std::endl;
+		agent.satiety -= 15;
 	}
 };
 
@@ -19,6 +20,7 @@ template <typename T>
 struct EatingAction : Action<T> {
 	void execute(T& agent) override {
 		std::cout << "Agent" << agent.id << " Is eating.. " << std::endl;
+		agent.satiety += 30;
 	}
 };
 
@@ -88,7 +90,6 @@ int main ()
 	std::cout << "Initating..." << std::endl;
 
 	for (int i = 0; i < 10; i++) {
-		bob.satiety -= 10;
 		std::vector<Action<Agent<int>>*> plan = bob.sm.update(bob);
 
 		for (auto* action : plan) {
