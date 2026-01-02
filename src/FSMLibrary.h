@@ -62,14 +62,17 @@ struct Action : DecisionTreeNode<T> {
 // Mostly an interface
 template <typename T>
 struct Decision : DecisionTreeNode<T> {
-	DecisionTreeNode* trueNode = nullptr;
-	DecisionTreeNode* falseNode = nullptr;
+	DecisionTreeNode<T>* trueNode = nullptr;
+	DecisionTreeNode<T>* falseNode = nullptr;
 
+	// Should probably remove this even if book uses it
 	virtual T testValue(T& agent) = 0;
 	virtual DecisionTreeNode<T>* getBranch(T& agent) = 0;
 
 	DecisionTreeNode* makeDecision(T& agent) override {
 		DecisionTreeNode<T>* branch = getBranch(agent);
+		if (branch == nullptr)
+			return nullptr;
 		return branch->makeDecision(agent);
 	}
 };
@@ -77,10 +80,12 @@ struct Decision : DecisionTreeNode<T> {
 // Interface
 template <typename T>
 struct State {
+	// Only get actions need to be enforced since each state has to do something
 	virtual std::vector<Action<T>*> getActions() = 0;
-	virtual std::vector<Action<T>*> getEntryActions() = 0;
-	virtual std::vector<Action<T>*> getExitActions() = 0;
-	virtual std::vector<Transition<T>*> getTransitions() = 0;
+
+	virtual std::vector<Action<T>*> getEntryActions() { return {}; };
+	virtual std::vector<Action<T>*> getExitActions() { return {}; };
+	virtual std::vector<Transition<T>*> getTransitions() { return {}; };
 };
 
 // Interface
@@ -110,16 +115,14 @@ struct DecisionTreeTransition : Transition<T> {
 	std::vector<Action<T>*> getActions() {
 		if (targetState != nullptr)
 			return targetState->getActions();
-		else
-			return{};
+		return{};
 	}
 
 	State<T>* getTargetState() override {
 		if (targetState != nullptr) {
 			return targetState->getTargetState();
 		}
-		else
-			return nullptr;
+		return nullptr;
 	}
 
 	bool isTriggered(T& agent) {
