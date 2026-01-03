@@ -38,9 +38,6 @@
 // Enum is probably a bad idea so i should not use this
 
 template <typename T>
-struct Agent;
-
-template <typename T>
 struct Transition;
 
 // Interface used by either decision or action

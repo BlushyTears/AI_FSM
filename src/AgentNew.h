@@ -11,8 +11,6 @@
 #include "FSMLibrary.h"
 
 // Agent-specific implementation:
-template <typename T>
-struct Agent;
 
 template <typename T>
 struct Agent {
@@ -23,6 +21,89 @@ struct Agent {
 	int satiety = 100;
 	int socialScore = 100;
 	StateMachine<Agent<T>> sm;
+};
+
+// Actions
+template <typename T>
+struct IdleAction : Action<T> {
+	void execute(T& agent) override {
+		std::cout << "Agent" << agent.id << " Is Sleeping.. " << std::endl;
+		agent.satiety -= 10;
+	}
+};
+
+template <typename T>
+struct EatingAction : Action<T> {
+	void execute(T& agent) override {
+		std::cout << "Agent" << agent.id << " Is eating.. " << std::endl;
+		agent.satiety += 80;
+	}
+};
+
+// States
+template <typename T>
+struct SleepingState : State<T> {
+	IdleAction<T> sleeping;
+	std::vector<Transition<T>*> transitions;
+
+	std::vector<Action<T>*> getActions() override { return { &sleeping }; };
+	std::vector<Transition<T>*> getTransitions() override { return transitions; };
+};
+
+// 
+template <typename T>
+struct EatingState : State<T> {
+	EatingAction<T> eating;
+	std::vector<Transition<T>*> transitions;
+
+	std::vector<Action<T>*> getActions() override { return { &eating }; };
+	std::vector<Transition<T>*> getTransitions() override { return transitions; };
+};
+
+// Target states
+template<typename T>
+struct TargetEatingState : TargetState<T> {
+	EatingState<T>* eatingState;
+	TargetEatingState(EatingState<T>* s) : eatingState(s) {}
+
+	std::vector<Action<T>*> getActions() override { return {}; }
+	State<T>* getTargetState() override { return eatingState; }
+};
+
+template <typename T>
+struct TargetSleepingState : TargetState<T> {
+	SleepingState<T>* sleepingState;
+	TargetSleepingState(SleepingState<T>* s) : sleepingState(s) {}
+
+	std::vector<Action<T>*> getActions() override { return {}; }
+	State<T>* getTargetState() override { return sleepingState; }
+};
+
+// Decision tree nodes
+template <typename T>
+struct HungerDecision : Decision<T> {
+	T testValue(T& agent) override { return agent; }
+
+	DecisionTreeNode<T>* getBranch(T& agent) override {
+		if (agent.satiety < 20) {
+			std::cout << "[Decision] Agent is hungry, switching to eating mode" << std::endl;
+			return this->trueNode;
+		}
+		return this->falseNode;
+	}
+};
+
+template <typename T>
+struct SleepingDecision : Decision<T> {
+	T testValue(T& agent) override { return agent; }
+
+	DecisionTreeNode<T>* getBranch(T& agent) override {
+		if (agent.satiety > 50) {
+			std::cout << "[Decision] Agent is tired, switching to sleeping mode" << std::endl;
+			return this->trueNode;
+		}
+		return this->falseNode;
+	}
 };
 
 // Action primitive idea to eat
