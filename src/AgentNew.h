@@ -12,7 +12,6 @@
 
 // Agent-specific implementation:
 
-template <typename T>
 struct Agent {
 	int id;
 	int money = 100;
@@ -20,7 +19,12 @@ struct Agent {
 	int alertness = 100;
 	int satiety = 100;
 	int socialScore = 100;
-	StateMachine<Agent<T>> sm;
+	StateMachine<Agent> sm;
+};
+
+struct Food {
+	int price = 10;
+	bool yetToBeEaten = false;
 };
 
 // Actions

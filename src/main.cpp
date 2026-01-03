@@ -11,23 +11,23 @@ const int MAXIMUM_AGENTS = 4;
 // Worker struct 
 int main ()
 {
-	SleepingState<Agent<int>>* sleepingState = new SleepingState<Agent<int>>();
-	EatingState<Agent<int>>* eatingState = new EatingState<Agent<int>>();
+	SleepingState<Agent>* sleepingState = new SleepingState<Agent>();
+	EatingState<Agent>* eatingState = new EatingState<Agent>();
 
-	TargetEatingState<Agent<int>>* targetEating = new TargetEatingState<Agent<int>>(eatingState);
-	HungerDecision<Agent<int>>* hungerCheck = new HungerDecision<Agent<int>>();
+	TargetEatingState<Agent>* targetEating = new TargetEatingState<Agent>(eatingState);
+	HungerDecision<Agent>* hungerCheck = new HungerDecision<Agent>();
 
 	hungerCheck->trueNode = targetEating;
 	hungerCheck->falseNode = nullptr;
 
-	TargetSleepingState<Agent<int>>* targetSleeping = new TargetSleepingState<Agent<int>>(sleepingState);
-	SleepingDecision<Agent<int>>* sleepingCheck = new SleepingDecision<Agent<int>>();
+	TargetSleepingState<Agent>* targetSleeping = new TargetSleepingState<Agent>(sleepingState);
+	SleepingDecision<Agent>* sleepingCheck = new SleepingDecision<Agent>();
 
 	sleepingCheck->trueNode = targetSleeping;
 	sleepingCheck->falseNode = nullptr;
 
-	DecisionTreeTransition<Agent<int>>* toEating = new DecisionTreeTransition<Agent<int>>();
-	DecisionTreeTransition<Agent<int>>* toSleeping = new DecisionTreeTransition<Agent<int>>();
+	DecisionTreeTransition<Agent>* toEating = new DecisionTreeTransition<Agent>();
+	DecisionTreeTransition<Agent>* toSleeping = new DecisionTreeTransition<Agent>();
 
 	toEating->decisionTreeRoot = hungerCheck;
 	toSleeping->decisionTreeRoot = sleepingCheck;
@@ -35,14 +35,14 @@ int main ()
 	sleepingState->transitions.push_back(toEating);
 	eatingState->transitions.push_back(toSleeping);
 
-	Agent<int>bob;
+	Agent bob;
 	bob.id = 1;
-	bob.sm = StateMachine<Agent<int>>(sleepingState);
+	bob.sm = StateMachine<Agent>(sleepingState);
 
 	std::cout << "Initating..." << std::endl;
 
 	for (int i = 0; i < 25; i++) {
-		std::vector<Action<Agent<int>>*> plan = bob.sm.update(bob);
+		std::vector<Action<Agent>*> plan = bob.sm.update(bob);
 
 		for (auto* action : plan) {
 			action->execute(bob);
