@@ -35,8 +35,64 @@
 // They could also write their own hours on top of joining, but my strategy to make them survive for longer
 // Will be to minimize social hours, and therefore do something else for those hours.
 
-// Enum is probably a bad idea so i should not use this
 
+
+/*
+	Behavior trees small notes:
+
+	Difference between behavior trees and state machines is that there's a single common interface
+	for all tasks, which means they can be combined together without needing to know what else is in 
+	the behavior tree
+
+
+	Conditions check some property of the game such as proximity, line of sight
+	Actions alter the state of the game
+	Composite tasks
+
+	Conditions and actions sit at the leaf of the tree 
+*/
+
+/* -FSM + Behavior trees - */
+
+// Base class
+template <typename T>
+struct Task {
+	virtual bool run(T& agent) = 0;
+	virtual ~Task() = default; // remove this when code works
+};
+
+// Picks first possible child task that runs and returns true
+template <typename T>
+struct Selector : Task<T> {
+	std::vector<Task<T>*> children;
+
+	bool run(T& agent) {
+		for (auto& c : children) {
+			if (c->run(agent)) {
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+// Only returns true if all children tasks ran
+template <typename T>
+struct Sequence : Task<T> {
+	std::vector<Task<T>*> children;
+
+	bool run(T& agent) {
+		for (auto& c : children) {
+			if (!c->run(agent)) {
+				return false;
+			}
+		}
+		return true;
+	}
+};
+
+
+/* -FSM + Decision trees - */
 template <typename T>
 struct Transition;
 
@@ -170,5 +226,4 @@ struct StateMachine {
 		}
 	}
 };
-
 

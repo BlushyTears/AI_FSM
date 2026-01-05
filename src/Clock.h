@@ -12,6 +12,7 @@ struct Clock {
 	int currentDay = 0; // 0 - infinity
 	int timeMultiplier = 1;
 
+	// made up clock
 	inline void update() {
 		currentMilliSecond += timeMultiplier;
 

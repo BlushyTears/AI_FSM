@@ -7,18 +7,30 @@
 #include "AgentNew.h"
 #include "Clock.h"
 
+// External function to trickle down the agent's fields (Taxes, hunger naturally dissipating etc)
+void externalAgentTrickle(Agent& agent) {
+	agent.money -= 10;
+	agent.satiety -= 3;
+}
+
 const int MAXIMUM_AGENTS = 4;
 // Worker struct 
 int main ()
 {
 	SleepingState<Agent>* sleepingState = new SleepingState<Agent>();
 	EatingState<Agent>* eatingState = new EatingState<Agent>();
+	WorkingState<Agent>* workingState = new WorkingState<Agent>();
 
 	TargetEatingState<Agent>* targetEating = new TargetEatingState<Agent>(eatingState);
+	TargetWorkingState<Agent>* targetWorking = new TargetWorkingState<Agent>(workingState);
 	HungerDecision<Agent>* hungerCheck = new HungerDecision<Agent>();
+	WorkingDecision<Agent>* workingCheck = new WorkingDecision<Agent>();
 
 	hungerCheck->trueNode = targetEating;
 	hungerCheck->falseNode = nullptr;
+
+	workingCheck->trueNode = targetWorking;
+	workingCheck->falseNode = nullptr;
 
 	TargetSleepingState<Agent>* targetSleeping = new TargetSleepingState<Agent>(sleepingState);
 	SleepingDecision<Agent>* sleepingCheck = new SleepingDecision<Agent>();
@@ -28,28 +40,61 @@ int main ()
 
 	DecisionTreeTransition<Agent>* toEating = new DecisionTreeTransition<Agent>();
 	DecisionTreeTransition<Agent>* toSleeping = new DecisionTreeTransition<Agent>();
+	DecisionTreeTransition<Agent>* toWorking = new DecisionTreeTransition<Agent>();
 
 	toEating->decisionTreeRoot = hungerCheck;
 	toSleeping->decisionTreeRoot = sleepingCheck;
+	toWorking->decisionTreeRoot = workingCheck;
 
 	sleepingState->transitions.push_back(toEating);
-	eatingState->transitions.push_back(toSleeping);
+	sleepingState->transitions.push_back(toWorking);
 
-	Agent bob;
+	eatingState->transitions.push_back(toSleeping);
+	eatingState->transitions.push_back(toWorking);
+
+	workingState->transitions.push_back(toSleeping);
+	workingState->transitions.push_back(toEating);
+
+	Agent bob(2, 25);
 	bob.id = 1;
-	bob.sm = StateMachine<Agent>(sleepingState);
+	bob.sm = StateMachine<Agent>(eatingState);
+
+	Agent bob1(22, 5);
+	bob1.id = 2;
+	bob1.sm = StateMachine<Agent>(sleepingState);
+
+	std::vector<Agent> agents;
+
+	agents.push_back(bob);
+	agents.push_back(bob1);
 
 	std::cout << "Initating..." << std::endl;
 
+	std::vector<std::vector<Action<Agent>*>> plans;
+
 	for (int i = 0; i < 25; i++) {
-		std::vector<Action<Agent>*> plan = bob.sm.update(bob);
+		for (auto& agent : agents) {
+			externalAgentTrickle(agent);
 
-		for (auto* action : plan) {
-			action->execute(bob);
+			std::vector<Action<Agent>*> plan = agent.sm.update(agent);
+
+			for (auto* action : plan) {
+				action->execute(agent);
+			}
 		}
-
 		std::cout << "---------------------------------" << std::endl;
+
 	}
+
+	//for (auto& agent : agents) {
+	//	for (auto& plan : plans) {
+	//		for (auto* action : plan) {
+	//			action->execute(agent);
+	//			std::cout << "Hunger: " << agent.satiety;
+	//		}
+	//	}
+	//	std::cout << "---------------------------------" << std::endl;
+	//}
 
 	return 0;
 }
