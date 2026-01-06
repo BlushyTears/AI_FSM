@@ -35,8 +35,6 @@
 // They could also write their own hours on top of joining, but my strategy to make them survive for longer
 // Will be to minimize social hours, and therefore do something else for those hours.
 
-
-
 /*
 	Behavior trees small notes:
 
@@ -58,7 +56,6 @@
 template <typename T>
 struct Task {
 	virtual bool run(T& agent) = 0;
-	virtual ~Task() = default; // remove this when code works
 };
 
 // Picks first possible child task that runs and returns true
@@ -91,8 +88,7 @@ struct Sequence : Task<T> {
 	}
 };
 
-
-/* -FSM + Decision trees - */
+/* - FSM + Decision trees - */
 template <typename T>
 struct Transition;
 

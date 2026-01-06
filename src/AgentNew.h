@@ -27,7 +27,17 @@ struct Agent {
 	}
 
 	StateMachine<Agent> sm;
+	std::vector<Agent> matchingAgents;
+
+	bool operator==(const Agent& agent) const {
+		return this->id == agent.id;
+	}
 };
+
+// Metaphor for 
+namespace Wifi {
+	inline std::vector<Agent> agents;
+}
 
 // - Behavior trees -
 
@@ -37,8 +47,9 @@ struct Agent {
 template <typename T>
 struct BrickLayingTask : Task<T> {
 	int goalMoney = 90;
-	int salary = 15;
+	int salary = 5;
 	bool run(T& agent) override {
+		std::cout << "Agent " << agent.id << " is doing laybricking" << std::endl;;
 		agent.money += salary;
 		if (agent.money >= goalMoney)
 			return true;
@@ -48,10 +59,11 @@ struct BrickLayingTask : Task<T> {
 
 template <typename T>
 struct CarpentryLabourTask : Task<T> {
-	int goalMoney = 50;
-	int salary = 5;
+	int goalMoney = 40;
+	int salary = 15;
 
 	bool run(T& agent) override {
+		std::cout << "Agent " << agent.id << " is doing carpentry" << std::endl;
 		agent.money += salary;
 		if (agent.money >= goalMoney)
 			return true;
@@ -65,7 +77,7 @@ struct CollectMoney : Selector<T> {
 	CarpentryLabourTask<T> clt;
 	// Pick one of two jobs depending on how much money the agent has
 	CollectMoney(T& agent) {
-		if (agent.money > 40) {
+		if (agent.money <= 20) {
 			this->children.push_back(&blt);
 			this->children.push_back(&clt);
 		}
@@ -90,7 +102,23 @@ struct SleepingAction : Action<T> {
 template <typename T>
 struct EatingAction : Action<T> {
 	void execute(T& agent) override {
-		std::cout << "Agent " << agent.id << " Is eating.. " << std::endl;
+		agent.matchingAgents.clear();
+		for (auto& externAgent : Wifi::agents) {
+			if (externAgent.sm.currentState == agent.sm.currentState
+				&& externAgent.id != agent.id) {
+				agent.matchingAgents.push_back(externAgent);
+			}
+		}
+		if (agent.matchingAgents.size() > 0) {
+			std::cout << " Agent: " << agent.id << " is eating with";
+			for (auto& meetingAgent : agent.matchingAgents) {
+				std::cout << " Agent; " << meetingAgent.id << ", ";
+			}
+			std::cout << std::endl;
+		}
+		else {
+			std::cout << "Agent " << agent.id << " Is eating alone at home " << std::endl;
+		}
 		agent.satiety += agent.satietyGain;
 	}
 };
@@ -111,8 +139,8 @@ struct WorkingAction : Action<T> {
 			// here we parse the agent
 			cm = new CollectMoney<T>(agent);
 		}
+		std::cout << "Agent " << agent.id << " Is going to work.. " << std::endl;
 		while(!cm->run(agent)) {
-			std::cout << "Agent " << agent.id << " Is working.. " << std::endl;
 		}
 	}
 };
