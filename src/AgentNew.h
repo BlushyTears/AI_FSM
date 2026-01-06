@@ -12,18 +12,23 @@
 
 struct Agent {
 	int id;
-	int money = 100;
+	int money = 40;
 	std::vector<std::pair<int, std::string>> items;
 	int alertness = 100;
 	int satiety = 100;
 	int socialScore = 100;
 
-	int satietyGain;
-	int satietyLoss;
+	int metabolismRate;
+	int costOfLiving;
+	int drowsynessRate;
+	int extroversionRate;
+	Agent(int _metabolismRate, int _costOfLiving, int _drowsynessRate, int _extroVersionRate) 
+	:	metabolismRate(_metabolismRate),
+		costOfLiving(_costOfLiving),
+		drowsynessRate(drowsynessRate),
+		extroversionRate(_extroVersionRate)
+	{
 
-	Agent(int _satietyLoss, int _satietyGain) {
-		satietyLoss = _satietyLoss;
-		satietyGain = _satietyGain;
 	}
 
 	StateMachine<Agent> sm;
@@ -46,10 +51,10 @@ namespace Wifi {
 
 template <typename T>
 struct BrickLayingTask : Task<T> {
-	int goalMoney = 90;
-	int salary = 5;
+	int goalMoney = 70;
+	int salary = 15;
 	bool run(T& agent) override {
-		std::cout << "Agent " << agent.id << " is doing laybricking" << std::endl;;
+		std::cout << "Agent " << agent.id << " is doing laybricking, money: " << agent.money << std::endl;;
 		agent.money += salary;
 		if (agent.money >= goalMoney)
 			return true;
@@ -60,10 +65,10 @@ struct BrickLayingTask : Task<T> {
 template <typename T>
 struct CarpentryLabourTask : Task<T> {
 	int goalMoney = 40;
-	int salary = 15;
+	int salary = 25;
 
 	bool run(T& agent) override {
-		std::cout << "Agent " << agent.id << " is doing carpentry" << std::endl;
+		std::cout << "Agent " << agent.id << " is doing carpentry, money: " << agent.money << std::endl;
 		agent.money += salary;
 		if (agent.money >= goalMoney)
 			return true;
@@ -79,11 +84,9 @@ struct CollectMoney : Selector<T> {
 	CollectMoney(T& agent) {
 		if (agent.money <= 20) {
 			this->children.push_back(&blt);
-			this->children.push_back(&clt);
 		}
 		else {
 			this->children.push_back(&clt);
-			this->children.push_back(&blt);
 		}
 	}
 };
@@ -95,7 +98,7 @@ template <typename T>
 struct SleepingAction : Action<T> {
 	void execute(T& agent) override {
 		std::cout << "Agent " << agent.id << " Is Sleeping.. " << std::endl;
-		agent.satiety -= agent.satietyLoss;
+		agent.satiety -= 5;
 	}
 };
 
@@ -112,6 +115,7 @@ struct EatingAction : Action<T> {
 		if (agent.matchingAgents.size() > 0) {
 			std::cout << " Agent: " << agent.id << " is eating with";
 			for (auto& meetingAgent : agent.matchingAgents) {
+				agent.socialScore += 3;
 				std::cout << " Agent; " << meetingAgent.id << ", ";
 			}
 			std::cout << std::endl;
@@ -119,7 +123,7 @@ struct EatingAction : Action<T> {
 		else {
 			std::cout << "Agent " << agent.id << " Is eating alone at home " << std::endl;
 		}
-		agent.satiety += agent.satietyGain;
+		agent.satiety += 30;
 	}
 };
 
