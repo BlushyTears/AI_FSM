@@ -9,8 +9,9 @@
 
 // External function to trickle down the agent's fields (Taxes, hunger naturally dissipating etc)
 void externalAgentTrickle(Agent& agent) {
-	agent.money -= 10;
-	agent.satiety -= 10;
+	agent.money -= agent.costOfLiving;
+	agent.satiety -= agent.metabolismRate;
+	agent.sleep -= agent.drowsynessRate;
 }
 
 // Socializing component idea:
@@ -58,15 +59,15 @@ int main ()
 	workingState->transitions.push_back(toSleeping);
 	workingState->transitions.push_back(toEating);
 
-	Agent bob(3, 3, 2, 5);
+	Agent bob(10, 3, 2, 5);
 	bob.id = 1;
 	bob.sm = StateMachine<Agent>(eatingState);
 
-	Agent bob1(3, 2, 2, 1);
+	Agent bob1(5, 2, 2, 1);
 	bob1.id = 2;
 	bob1.sm = StateMachine<Agent>(sleepingState);
 
-	Agent bob2(4, 5, 1, 6);
+	Agent bob2(1, 5, 1, 6);
 	bob2.id = 3;
 	bob2.sm = StateMachine<Agent>(workingState);
 
@@ -77,7 +78,7 @@ int main ()
 	std::cout << "Initating..." << std::endl;
 	std::vector<std::vector<Action<Agent>*>> plans;
 
-	for (int i = 0; i < 25; i++) {
+	for (int i = 0; i < 50; i++) {
 		if (Wifi::agents.size() == 0) {
 			std::cout << "----------------------------------------------------" << std::endl;
 			std::cout << "- Ending simulation early since all agents have died -" << std::endl;
@@ -85,13 +86,13 @@ int main ()
 			break;
 		}
 		for (auto& agent : Wifi::agents) {
+			externalAgentTrickle(agent);
 			if (agent.satiety <= 0) {
 				std::cout << "Agent << " << agent.id << " died, removing from list of agents!" << std::endl;
 				auto it = find(Wifi::agents.begin(), Wifi::agents.end(), agent);
 				Wifi::agents.erase(it);
 				break;
 			}
-			externalAgentTrickle(agent);
 
 			std::vector<Action<Agent>*> plan = agent.sm.update(agent);
 
@@ -99,7 +100,7 @@ int main ()
 				action->execute(agent);
 			}
 		}
-		std::cout << "---------------------------------" << std::endl;
+		std::cout << "---------------------------------------------------------------------" << std::endl;
 	}
 
 	return 0;

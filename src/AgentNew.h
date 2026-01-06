@@ -10,13 +10,20 @@
 
 #include "FSMLibrary.h"
 
+struct Agent;
+// Metaphor for making agents speak with other 
+// (Oh how I overcomplicated that process in my head before just doing this)
+namespace Wifi {
+	inline std::vector<Agent> agents;
+}
+
 struct Agent {
 	int id;
 	int money = 40;
 	std::vector<std::pair<int, std::string>> items;
-	int alertness = 100;
-	int satiety = 100;
-	int socialScore = 100;
+	int sleep = 79;
+	int satiety = 60;
+	int socialScore = 50;
 
 	int metabolismRate;
 	int costOfLiving;
@@ -32,23 +39,30 @@ struct Agent {
 	}
 
 	StateMachine<Agent> sm;
-	std::vector<Agent> matchingAgents;
 
 	bool operator==(const Agent& agent) const {
 		return this->id == agent.id;
 	}
+
+	std::vector<Agent> getMatchingAgents(Agent& agent) {
+		std::vector<Agent> potentialAgents;
+
+		for (auto& externAgent : Wifi::agents) {
+			if (externAgent.sm.currentState == agent.sm.currentState
+				&& externAgent.id != agent.id) {
+				potentialAgents.push_back(externAgent);
+			}
+		}
+
+		return potentialAgents;
+	}
 };
 
-// Metaphor for 
-namespace Wifi {
-	inline std::vector<Agent> agents;
-}
 
 // - Behavior trees -
 
 // Agent Should pick job based on much money he has
-// We artificially enforce one of the jobs by making agent spend enough money at once
-
+// We arbitrarily pick one of the jobs by making agent spend enough money at once
 template <typename T>
 struct BrickLayingTask : Task<T> {
 	int goalMoney = 70;
@@ -91,39 +105,72 @@ struct CollectMoney : Selector<T> {
 	}
 };
 
+template <typename T>
+struct Drink : Task<T> {
+	bool run(T& agent) override {
+		if (agent.satiety > 70)
+			return true;
+
+		std::vector<Agent> matchingAgents = agent.getMatchingAgents(agent);
+
+		if (matchingAgents.size() == 0) {
+			std::cout << "[Task] Agent " << agent.id << " is drinking some soda at the resturant, money: " << agent.money << std::endl;
+		}
+		else {
+			for (auto& meetingAgent : matchingAgents) {
+				agent.socialScore += 5;
+				std::cout << "[Task] Agent " << agent.id << ", " 
+						<< " Is drinking soda at some resturant (with Agent " << meetingAgent.id << "), money: " 
+						<< agent.money << meetingAgent.id << std::endl;
+			}
+		}
+
+		agent.satiety += 5;
+	}
+};
+
+template <typename T>
+struct Eat : Task<T> {
+	bool run(T& agent) override {
+		if (agent.satiety > 60)
+			return true;
+		std::cout << "[Task] Agent " << agent.id << " is eating a burger" << std::endl;
+		agent.satiety += 10;
+	}
+};
+
+template <typename T>
+struct EatAndDrinkBehavior : Sequence<T> {
+	Eat<T> eating;
+	Drink<T> drinking;
+
+	EatAndDrinkBehavior() {
+		this->children.push_back(&eating);
+		this->children.push_back(&drinking);
+	}
+};
+
 // - Decision trees - 
 
 // Actions
 template <typename T>
 struct SleepingAction : Action<T> {
 	void execute(T& agent) override {
-		std::cout << "Agent " << agent.id << " Is Sleeping.. " << std::endl;
-		agent.satiety -= 5;
+		std::cout << "[Action] Agent " << agent.id << " Is Sleeping.. " << std::endl;
+		agent.sleep += 15;
 	}
 };
 
 template <typename T>
 struct EatingAction : Action<T> {
+	EatAndDrinkBehavior<T>* eatAndDrink = nullptr;
+
 	void execute(T& agent) override {
-		agent.matchingAgents.clear();
-		for (auto& externAgent : Wifi::agents) {
-			if (externAgent.sm.currentState == agent.sm.currentState
-				&& externAgent.id != agent.id) {
-				agent.matchingAgents.push_back(externAgent);
-			}
+		if (eatAndDrink == nullptr) {
+			eatAndDrink = new EatAndDrinkBehavior<T>();
 		}
-		if (agent.matchingAgents.size() > 0) {
-			std::cout << " Agent: " << agent.id << " is eating with";
-			for (auto& meetingAgent : agent.matchingAgents) {
-				agent.socialScore += 3;
-				std::cout << " Agent; " << meetingAgent.id << ", ";
-			}
-			std::cout << std::endl;
-		}
-		else {
-			std::cout << "Agent " << agent.id << " Is eating alone at home " << std::endl;
-		}
-		agent.satiety += 30;
+		std::cout << "[Action] agent " << agent.id << " is eating " << std::endl;
+		eatAndDrink->run(agent);
 	}
 };
 
@@ -143,9 +190,10 @@ struct WorkingAction : Action<T> {
 			// here we parse the agent
 			cm = new CollectMoney<T>(agent);
 		}
-		std::cout << "Agent " << agent.id << " Is going to work.. " << std::endl;
-		while(!cm->run(agent)) {
-		}
+		std::cout << "[Action] Agent " 
+			<< agent.id << " Is going to work.. , money: "
+			<< agent.money << std::endl;
+		while(!cm->run(agent)) {}
 	}
 };
 
@@ -214,8 +262,10 @@ template <typename T>
 struct HungerDecision : Decision<T> {
 	T testValue(T& agent) override { return agent; }
 	DecisionTreeNode<T>* getBranch(T& agent) override {
-		if (agent.satiety < 60 && agent.money > 30) {
-			std::cout << "[Decision] Agent " << agent.id << " is hungry, switching to eating mode" << std::endl;
+		if (agent.satiety < 40 && agent.money > 10) {
+			std::cout << "[Decision] Agent " << agent.id 
+				<< " is hungry, switching to eating mode, hunger:" 
+				<< agent.satiety  << std::endl;
 			return this->trueNode;
 		}
 		return this->falseNode;
@@ -226,7 +276,7 @@ template <typename T>
 struct SleepingDecision : Decision<T> {
 	T testValue(T& agent) override { return agent; }
 	DecisionTreeNode<T>* getBranch(T& agent) override {
-		if (agent.satiety > 60) {
+		if (agent.sleep < 30) {
 			std::cout << "[Decision] Agent " << agent.id << "  is tired, switching to sleeping mode" << std::endl;
 			return this->trueNode;
 		}

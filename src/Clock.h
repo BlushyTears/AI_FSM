@@ -4,6 +4,8 @@
 #include <string>
 #include "raylib.h"
 
+// I realized this clock isn't needed if i just print everything to the console instantly instead
+// But I have kept it included in case I need to implement a more realistic time-based environment
 struct Clock {
 	int currentMilliSecond = 0; // 0 - 100
 	int currentSecond = 0; // 0 - 60
