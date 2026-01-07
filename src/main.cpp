@@ -140,8 +140,10 @@ int main ()
 		}
 		std::cout << "----------------------------------------------------------------------------------" << std::endl;
 	}
-
-	std::cout << "Simulation has ended, " << Wifi::agents.size() << " Agents survived" << std::endl;
+	std::string s;
+	std::cout << "Simulation has ended, " << Wifi::agents.size() 
+		<< " Agents survived press any key + enter to close (.exe file kept closing itself)" << std::endl;
+	std::cin >> s;
 	return 0;
 }
 
