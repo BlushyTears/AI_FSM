@@ -20,9 +20,9 @@ namespace Wifi {
 struct Agent {
 	int id;
 	int money = 40;
+	int satiety = 60;
 	int items = 0;
 	int sleep = 79;
-	int satiety = 60;
 	int socialScore = 50;
 
 	int metabolismRate;
@@ -157,7 +157,8 @@ struct EatBurger : Task<T> {
 				std::cout << "[Task] Agent " << agent.id << ", "
 							<< " Is eating burgers at some resturant (with Agent "
 							<< meetingAgent.id << "). Money: "
-							<< agent.money << meetingAgent.id << std::endl;
+							<< agent.money << " Hunger: "
+							<< agent.satiety << std::endl;
 			}
 		}
 		agent.satiety += 10;
@@ -229,7 +230,7 @@ struct SpendingAction : Action<T> {
 	void execute(T& agent) override {
 		std::string item;
 		if (agent.money > hatPrice) {
-			item = "A Hat!";
+			item = "Hats!";
 			agent.money -= hatPrice;
 		}
 		else if (agent.money <= hatPrice && agent.money > bootsPrice) {
@@ -237,15 +238,15 @@ struct SpendingAction : Action<T> {
 			agent.money -= bootsPrice;
 		}
 		else {
-			item = "A Shovel!";
+			item = "Gloves!";
 			agent.money -= shovelPrice;
 		}
 		agent.items++;
 		std::cout << "[Action] Agent "
 					<< agent.id << " went to to the store and bought " 
 					<< item << " Total Items bought: " 
-					<< agent.items
-					<< item << ". Money: "
+					<< agent.items << " "
+					<< item << " Money: "
 					<< agent.money 
 					<< std::endl;
 	}
@@ -258,8 +259,8 @@ struct SocializingAction : Action<T> {
 
 		if (matchingAgents.size() == 0) {
 			std::cout << "[Task] Agent " << agent.id
-				<< " Had noboy to go our with so it stayed home :(. SocialScore: "
-				<< agent.socialScore << ", SocialScore: " << std::endl;
+				<< " Had noboy to go our with so it stayed home. SocialScore: "
+				<< agent.socialScore << std::endl;
 			agent.socialScore -= 2; // Agent felt extra sad now :(
 		}
 		else {
@@ -422,7 +423,7 @@ struct SpendingDecision : Decision<T> {
 		// we really wanna reduce the spending hehe
 		if (agent.money > 100 && agent.satiety > 30 && agent.sleep > 30) {
 			std::cout << "[Decision] Agent " << agent.id 
-						<< "  is feeling rich, switching to spending mode. Money:"
+						<< "  is feeling rich, switching to spending mode. Money: "
 						<< agent.money
 						<< std::endl;
 			return this->trueNode;
@@ -439,7 +440,8 @@ struct SocializingDecision : Decision<T> {
 		if (agent.socialScore < 10) {
 			std::cout << "[Decision] Agent " 
 						<< agent.id 
-						<< "  is feeling lonely, switching to socializing mode" 
+						<< "  is feeling lonely, switching to socializing mode. SocialScore: "
+						<< agent.socialScore
 						<< std::endl;
 			return this->trueNode;
 		}
