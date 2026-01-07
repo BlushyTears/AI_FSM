@@ -7,11 +7,12 @@
 #include "AgentNew.h"
 #include "Clock.h"
 
-// External function to trickle down the agent's fields (Taxes, hunger naturally dissipating etc)
+// External function to trickle down the agent's fields (Taxes, digestion etc)
 void externalAgentTrickle(Agent& agent) {
 	agent.money -= agent.costOfLiving;
 	agent.satiety -= agent.metabolismRate;
 	agent.sleep -= agent.drowsynessRate;
+	agent.socialScore -= agent.extroversionRate;
 }
 
 // How long the simulation will go on for. 
@@ -51,40 +52,38 @@ int main ()
 	hungerCheck->falseNode = nullptr;
 	workingCheck->trueNode = targetWorking;
 	workingCheck->falseNode = nullptr;
-	socializingCheck->trueNode = targetWorking;
+	socializingCheck->trueNode = targetSocializing;
 	socializingCheck->falseNode = nullptr;
 	spendingCheck->trueNode = targetSpending;
 	spendingCheck->falseNode = nullptr;
 
+	toSocializing->decisionTreeRoot = socializingCheck;
 	toSleeping->decisionTreeRoot = sleepingCheck;
 	toEating->decisionTreeRoot = hungerCheck;
 	toWorking->decisionTreeRoot = workingCheck;
 	toSpending->decisionTreeRoot = spendingCheck;
-	toSocializing->decisionTreeRoot = socializingCheck;
 
 	// Just to demonstrate the power of this FSM, you can go from socializing to the other states
 	// Additionally, you can only go into 'spending state' if you are either currently working or eating
 
+	sleepingState->transitions.push_back(toSocializing);
 	sleepingState->transitions.push_back(toEating);
 	sleepingState->transitions.push_back(toWorking);
-	sleepingState->transitions.push_back(toSocializing);
 
 	eatingState->transitions.push_back(toSleeping);
 	eatingState->transitions.push_back(toWorking);
 	eatingState->transitions.push_back(toSpending);
 
-	workingState->transitions.push_back(toSleeping);
 	workingState->transitions.push_back(toEating);
-	workingState->transitions.push_back(toSpending);
 	workingState->transitions.push_back(toSocializing);
+	workingState->transitions.push_back(toSleeping);
+	workingState->transitions.push_back(toSpending);
 
 	spendingState->transitions.push_back(toSleeping);
 	spendingState->transitions.push_back(toEating);
 	spendingState->transitions.push_back(toWorking);
 
 	socializingState->transitions.push_back(toSleeping);
-	socializingState->transitions.push_back(toEating);
-	socializingState->transitions.push_back(toWorking);
 	socializingState->transitions.push_back(toSpending);
 
 	Agent bob1(1, 3, 2, 2, 150, 90);
@@ -99,7 +98,7 @@ int main ()
 	bob3.id = 3;
 	bob3.sm = StateMachine<Agent>(workingState);
 
-	Agent bob4(12, 4, 5, 8, 20, 60);
+	Agent bob4(12, 4, 5, 4, 20, 60);
 	bob4.id = 4;
 	bob4.sm = StateMachine<Agent>(spendingState);
 
@@ -123,7 +122,7 @@ int main ()
 			if (agent.satiety <= 0 || agent.sleep <= 0) {
 				std::cout << "[DEATH] Agent " 
 							<< agent.id 
-							<< " died from either lack of hunger or lack of sleep,"
+							<< " died from either lack of hunger or lack of sleep," << std::endl
 							<< " Hunger: " << agent.satiety << " Sleep" << agent.sleep
 							<< ". Removing this from list of agents!" 
 							<< std::endl;

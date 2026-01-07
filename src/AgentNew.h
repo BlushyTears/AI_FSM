@@ -63,8 +63,7 @@ struct Agent {
 
 // - Behavior trees -
 
-// Agent Should pick job based on much money he has
-// We arbitrarily pick one of the jobs by making agent spend enough money at once
+// Agent picks job based on much money it has
 template <typename T>
 struct BrickLayingTask : Task<T> {
 	int goalMoney = 50;
@@ -103,7 +102,6 @@ template <typename T>
 struct CollectMoney : Selector<T> {
 	BrickLayingTask<T> blt;
 	CarpentryLabourTask<T> clt;
-	// Pick one of two jobs depending on how much money the agent has
 	CollectMoney(T& agent) {
 		this->children.push_back(&blt);
 		this->children.push_back(&clt);
@@ -231,21 +229,23 @@ struct SpendingAction : Action<T> {
 	void execute(T& agent) override {
 		std::string item;
 		if (agent.money > hatPrice) {
-			item = "A Hat";
+			item = "A Hat!";
 			agent.money -= hatPrice;
 		}
 		else if (agent.money <= hatPrice && agent.money > bootsPrice) {
-			item = "Boots";
+			item = "Boots!";
 			agent.money -= bootsPrice;
 		}
 		else {
-			item = "A Shovel";
+			item = "A Shovel!";
 			agent.money -= shovelPrice;
 		}
 		agent.items++;
 		std::cout << "[Action] Agent "
 					<< agent.id << " went to to the store and bought " 
-					<< item << ", money: "
+					<< item << " Total Items bought: " 
+					<< agent.items
+					<< item << ". Money: "
 					<< agent.money 
 					<< std::endl;
 	}
@@ -260,14 +260,15 @@ struct SocializingAction : Action<T> {
 			std::cout << "[Task] Agent " << agent.id
 				<< " Had noboy to go our with so it stayed home :(. SocialScore: "
 				<< agent.socialScore << ", SocialScore: " << std::endl;
-			agent.socialScore -= 5; // Agent felt extra sad now :(
+			agent.socialScore -= 2; // Agent felt extra sad now :(
 		}
 		else {
 			std::cout << "[Action] Agent " << agent.id << " Is going out with Agent: ";
 			for (auto& meetingAgent : matchingAgents) {
 				std::cout << meetingAgent.id << ", ";
-				agent.socialScore += 15; // happy!
+				agent.socialScore += 25; // happy!
 			}
+			std::cout << std::endl;
 		}
 	}
 };
@@ -402,7 +403,7 @@ template <typename T>
 struct WorkingDecision : Decision<T> {
 	T testValue(T& agent) override { return agent; }
 	DecisionTreeNode<T>* getBranch(T& agent) override {
-		if (agent.money < 20 && agent.satiety >= 10) {
+		if (agent.money < 10 && agent.satiety >= 10 && agent.sleep > 30) {
 			std::cout << "[Decision] Agent " 
 						<< agent.id 
 						<< " needs money, switching to working mode. Money:" 
@@ -435,7 +436,7 @@ struct SocializingDecision : Decision<T> {
 	T testValue(T& agent) override { return agent; }
 	DecisionTreeNode<T>* getBranch(T& agent) override {
 		// Here we explicitly tell the agents that we should only go out if we're not about to starve
-		if (agent.socialScore < 10 && agent.satiety > 20) {
+		if (agent.socialScore < 10) {
 			std::cout << "[Decision] Agent " 
 						<< agent.id 
 						<< "  is feeling lonely, switching to socializing mode" 
