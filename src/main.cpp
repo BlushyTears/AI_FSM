@@ -90,15 +90,15 @@ int main ()
 	bob1.id = 1;
 	bob1.sm = StateMachine<Agent>(eatingState);
 
-	Agent bob2(4, 2, 7, 3, 70, 190);
+	Agent bob2(1, 2, 2, 3, 70, 50);
 	bob2.id = 2;
 	bob2.sm = StateMachine<Agent>(sleepingState);
 
-	Agent bob3(3, 5, 2, 4, 50, 50);
+	Agent bob3(1, 4, 2, 4, 50, 120);
 	bob3.id = 3;
 	bob3.sm = StateMachine<Agent>(workingState);
 
-	Agent bob4(12, 4, 5, 4, 20, 60);
+	Agent bob4(1, 3, 2, 4, 20, 80);
 	bob4.id = 4;
 	bob4.sm = StateMachine<Agent>(spendingState);
 
