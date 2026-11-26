@@ -1,4 +1,4 @@
-Only FSMLibrary.h is the valuable part here, the rest is just example code on how this can be used.
+Only FSMLibrary.h is the valuable part here, the rest is just example code on how this can be used. The code is based on the book: "AI for games" by Ian Millington.
 
 Binary executable has been submitted via canvas
 
